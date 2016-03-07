@@ -78,7 +78,7 @@ public abstract class ToolInstallation extends PageAreaImpl {
         control("home").set(home);
         return this;
     }
-
+    
     protected String fakeHome(String binary, String homeEnvName) {
         try {
             final File home = File.createTempFile("toolhome", binary);
