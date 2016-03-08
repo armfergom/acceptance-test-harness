@@ -28,7 +28,7 @@ public class MSBuildStep extends AbstractStep implements BuildStep {
     }
 
     public MSBuildStep setCmdLineArgs(String cmdArgs) {
-        cmdLineArgs.select(cmdArgs);
+        cmdLineArgs.set(cmdArgs);
         return this;
     }
 }
