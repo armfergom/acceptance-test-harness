@@ -196,7 +196,7 @@ public class Job extends TopLevelItem {
             byte[] archive = IOUtils.toByteArray(new FileInputStream(tmp));
 
             if (SystemUtils.IS_OS_WINDOWS) {
-                addBatchStep("xcopy "+file.getAbsolutePath()+" %cd% /E");
+                addBatchStep("xcopy " + file.getAbsolutePath() + " %cd% /E");
             } else {
                 addShellStep(String.format(
                         "base64 --decode << ENDOFFILE > archive.zip && unzip -o archive.zip \n%s\nENDOFFILE",
