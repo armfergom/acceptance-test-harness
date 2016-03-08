@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.SystemUtils;
 import org.codehaus.plexus.util.Base64;
 import org.jenkinsci.test.acceptance.junit.Resource;
 import org.openqa.selenium.WebElement;
@@ -138,6 +139,12 @@ public class Job extends TopLevelItem {
         step.command(shell);
         return step;
     }
+    
+    private BatchBuildStep addBatchStep(String batch) {
+        BatchBuildStep step = addBuildStep(BatchBuildStep.class);
+        step.command(batch);
+        return step;
+    }
 
     public <T extends BuildWrapper> T addBuildWrapper(Class<T> type) {
         ensureConfigPage();
@@ -188,10 +195,14 @@ public class Job extends TopLevelItem {
             ZipUtil.pack(file, tmp);
             byte[] archive = IOUtils.toByteArray(new FileInputStream(tmp));
 
-            addShellStep(String.format(
-                    "base64 --decode << ENDOFFILE > archive.zip && unzip -o archive.zip \n%s\nENDOFFILE",
-                    new String(Base64.encodeBase64Chunked(archive))
-            ));
+            if (SystemUtils.IS_OS_WINDOWS) {
+                addBatchStep("xcopy "+file.getAbsolutePath()+" %cd% /E");
+            } else {
+                addShellStep(String.format(
+                        "base64 --decode << ENDOFFILE > archive.zip && unzip -o archive.zip \n%s\nENDOFFILE",
+                        new String(Base64.encodeBase64Chunked(archive))
+                ));
+            }
         } catch (IOException e) {
             throw new AssertionError(e);
         } finally {

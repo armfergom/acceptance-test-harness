@@ -22,10 +22,12 @@ import org.junit.internal.AssumptionViolatedException;
  * In order for the test to know where the MSBuild installation dir is, an
  * environment variable must be set. i.e:
  * 
- *      MSBUILD_EXE_ENV = C:\Windows\Microsoft.NET\Framework\v2.0.50727\MSBuild.exe
+ *      MSBUILD_EXE = C:\Windows\Microsoft.NET\Framework\v2.0.50727\MSBuild.exe
  * 
- * Tests will be skipped id the environment variable is not set or the test is
- * not running on a Windows machine.
+ * Tests will be skipped if:
+ *      - The environment variable is not set 
+ *      - The test is not running on a Windows machine
+ *      - MSBUild.exe is not present in the specified location
  */
 @WithPlugins("msbuild")
 public class MSBuildPluginTest extends AbstractJUnitTest {
@@ -34,7 +36,7 @@ public class MSBuildPluginTest extends AbstractJUnitTest {
     private static final String MSBUILD_NAME = "MSBuildInstallation";
 
     /**
-     * Builds a freestyle job with a MSBuild step with the configuration passed
+     * Builds a FreeStyle job with a MSBuild step with the configuration passed as parameter
      * 
      * @param workspacePath The workspace where the project is located
      * @param buildFile The build file (.proj or .sln)
@@ -43,7 +45,7 @@ public class MSBuildPluginTest extends AbstractJUnitTest {
      * @throws IllegalArgumentException if workspacePath or buildFile are null
      */
     private FreeStyleJob msBuildJob(String workspacePath, String buildFile, String cmdArguments) {
-        if (workspacePath != null || buildFile != null) {
+        if (workspacePath != null && buildFile != null) {
             FreeStyleJob job = jenkins.jobs.create(FreeStyleJob.class);
             job.copyDir(resource(workspacePath));
             MSBuildStep msBuildStep = job.addBuildStep(MSBuildStep.class);
@@ -51,19 +53,13 @@ public class MSBuildPluginTest extends AbstractJUnitTest {
             if (cmdArguments != null && !cmdArguments.isEmpty()) {
                 msBuildStep.setCmdLineArgs(cmdArguments);
             }
+            job.save();
             return job;
         } else {
             throw new IllegalArgumentException("Workspace and buildFile must be different from null.");
         }
     }
     
-    /**
-     * - Checks that following is met. Otherwise, test is skipped. 
-     *      - Env variable is set 
-     *      - Test is run on Windows 
-     *      - MSBuild executable is reachable 
-     * - If configured properly, configures MSBuild to be used by the tests
-     */
     @Before
     public void setUp() {
          //Check environment configuration
