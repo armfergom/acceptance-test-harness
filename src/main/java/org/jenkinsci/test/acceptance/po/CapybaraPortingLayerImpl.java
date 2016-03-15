@@ -43,7 +43,6 @@ public class CapybaraPortingLayerImpl implements CapybaraPortingLayer {
     @Inject
     public Injector injector;
 
-
     @Inject
     protected ElasticTime time;
 
