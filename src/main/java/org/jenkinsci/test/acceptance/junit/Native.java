@@ -47,10 +47,11 @@ public @interface Native {
     String[] value();
 
     public class RuleImpl implements TestRule {
+        @Inject JenkinsController controller;
+        
         @Override
         public Statement apply(final Statement base, final Description d) {
             return new Statement() {
-                @Inject JenkinsController controller;
                 
                 @Override
                 public void evaluate() throws Throwable {
@@ -65,7 +66,7 @@ public @interface Native {
                     
                     // Checks performed in this annotation only makes sense if Jenkins and Tests are being executed in the same machine
                     if (!(controller instanceof LocalController)) {
-                        throw new AssumptionViolatedException("Test skipped. Native should be used with a local controller, otherwise it cannot be fully trusted to work as expected.");
+                        throw new AssumptionViolatedException("Test skipped. Native should be used with a local controller, otherwise it cannot be fully trusted to work as expected: " + controller.getClass().getName());
                     }
                     
                     // Get PATH
@@ -80,10 +81,10 @@ public @interface Native {
                     
                     // Iterate over PATH directories to get all supported commands
                     List<String> supportedCmds = Lists.newLinkedList();
-                    for (String dir : dirsInPath) {
-                        File folder = new File(dir);
-                        List<String> files = Arrays.asList(folder.list());
-                        if (files != null) {
+                    for (String dirName : dirsInPath) {
+                        File dir = new File(dirName);
+                        if (dir.isDirectory()) {
+                            List<String> files = Arrays.asList(dir.list());
                             supportedCmds.addAll(files);
                         }
                     }
@@ -91,7 +92,7 @@ public @interface Native {
                     // An cmd is not Native if it cannot be found in the PATH
                     for (String cmd : n.value()) {
                         if (!supportedCmds.contains(cmd)) {
-                            throw new AssumptionViolatedException(cmd + " is needed for the test but doesn't exist in the system");
+                            throw new AssumptionViolatedException(cmd + " is needed for the test but doesn't exist in the system.");
                         }
                     }
                 }

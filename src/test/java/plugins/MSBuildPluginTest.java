@@ -2,8 +2,6 @@ package plugins;
 
 import static org.junit.Assert.assertThat;
 
-import javax.inject.Named;
-
 import org.hamcrest.Matchers;
 import org.jenkinsci.test.acceptance.junit.AbstractJUnitTest;
 import org.jenkinsci.test.acceptance.junit.Native;
@@ -12,8 +10,6 @@ import org.jenkinsci.test.acceptance.msbuild.MSBuildStep;
 import org.jenkinsci.test.acceptance.po.Build;
 import org.jenkinsci.test.acceptance.po.FreeStyleJob;
 import org.junit.Test;
-
-import com.google.inject.Inject;
 
 /**
  * This test is designed to be run on a Windows machine with MSBuild installed and in the PATH
@@ -25,12 +21,6 @@ import com.google.inject.Inject;
 @WithPlugins("msbuild")
 @Native({"MSBuild"})
 public class MSBuildPluginTest extends AbstractJUnitTest {
-
-    @Inject
-    @Named("MSBuildPluginTest.MSBUILD_EXE") 
-    private String MS_BUILD_EXECUTABLE;
-    
-    private static final String MSBUILD_NAME = "MSBuildInstallation";
 
     /**
      * Builds a FreeStyle job with a MSBuild step with the configuration passed as parameter
@@ -46,7 +36,7 @@ public class MSBuildPluginTest extends AbstractJUnitTest {
             FreeStyleJob job = jenkins.jobs.create(FreeStyleJob.class);
             job.copyDir(resource(workspacePath));
             MSBuildStep msBuildStep = job.addBuildStep(MSBuildStep.class);
-            msBuildStep.setMSBuildName(MSBUILD_NAME).setMSBuildFile(buildFile);
+            msBuildStep.setMSBuildFile(buildFile);
             if (cmdArguments != null && !cmdArguments.isEmpty()) {
                 msBuildStep.setCmdLineArgs(cmdArguments);
             }

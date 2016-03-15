@@ -49,10 +49,11 @@ public @interface WithOS {
     OS[] os();
 
     public class RuleImpl implements TestRule {
+        @Inject JenkinsController controller;
+        
         @Override
         public Statement apply(final Statement base, final Description d) {
            return new Statement() {
-            @Inject JenkinsController controller;
                
             @Override
             public void evaluate() throws Throwable {
