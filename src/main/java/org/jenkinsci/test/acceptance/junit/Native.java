@@ -1,26 +1,41 @@
 package org.jenkinsci.test.acceptance.junit;
 
-import org.jenkinsci.utils.process.CommandBuilder;
+import org.apache.commons.lang.SystemUtils;
+import org.jenkinsci.test.acceptance.controller.JenkinsController;
+import org.jenkinsci.test.acceptance.controller.LocalController;
 import org.junit.internal.AssumptionViolatedException;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
+import com.google.common.collect.Lists;
+import com.google.inject.Inject;
+
+import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+import java.util.Arrays;
+import java.util.List;
 
 import static java.lang.annotation.ElementType.*;
 import static java.lang.annotation.RetentionPolicy.*;
 
 /**
  * Indicates the native commands necessary to run tests.
+ * 
+ * Works for Windows and UNIX systems. 
  *
  * <p>
- * If any of these commands do not exist, the test gets skipped.
- *
+ * Test gets skipped under the following circumstances:
+ * <ul>
+ * <li>If any of these commands do not exist.</li>
+ * <li>If a LocalController is not used, since we cannot ensure that the commands are present
+ * in the machine running Jenkins.</li>
+ * </ul>
+ * 
  * @author Kohsuke Kawaguchi
  */
 @Retention(RUNTIME)
@@ -35,6 +50,8 @@ public @interface Native {
         @Override
         public Statement apply(final Statement base, final Description d) {
             return new Statement() {
+                @Inject JenkinsController controller;
+                
                 @Override
                 public void evaluate() throws Throwable {
                     verifyNativeCommandPresent(d.getAnnotation(Native.class));
@@ -45,8 +62,35 @@ public @interface Native {
 
                 private void verifyNativeCommandPresent(Native n) throws IOException, InterruptedException {
                     if (n==null)        return;
+                    
+                    // Checks performed in this annotation only makes sense if Jenkins and Tests are being executed in the same machine
+                    if (!(controller instanceof LocalController)) {
+                        throw new AssumptionViolatedException("Test skipped. Native should be used with a local controller, otherwise it cannot be fully trusted to work as expected.");
+                    }
+                    
+                    // Get PATH
+                    String path = System.getenv("PATH");
+                    // Get all directories in PATH
+                    String[] dirsInPath;
+                    if (SystemUtils.IS_OS_WINDOWS) {
+                        dirsInPath =path.split(";");
+                    } else {
+                        dirsInPath =path.split(":");
+                    }
+                    
+                    // Iterate over PATH directories to get all supported commands
+                    List<String> supportedCmds = Lists.newLinkedList();
+                    for (String dir : dirsInPath) {
+                        File folder = new File(dir);
+                        List<String> files = Arrays.asList(folder.list());
+                        if (files != null) {
+                            supportedCmds.addAll(files);
+                        }
+                    }
+                    
+                    // An cmd is not Native if it cannot be found in the PATH
                     for (String cmd : n.value()) {
-                        if (new CommandBuilder("which",cmd).system()!=0) {
+                        if (!supportedCmds.contains(cmd)) {
                             throw new AssumptionViolatedException(cmd + " is needed for the test but doesn't exist in the system");
                         }
                     }

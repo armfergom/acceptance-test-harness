@@ -2,41 +2,28 @@ package plugins;
 
 import static org.junit.Assert.assertThat;
 
-import java.io.IOException;
-
 import javax.inject.Named;
 
 import org.hamcrest.Matchers;
 import org.jenkinsci.test.acceptance.junit.AbstractJUnitTest;
-import org.jenkinsci.test.acceptance.junit.TestActivation;
-import org.jenkinsci.test.acceptance.junit.WithOS;
+import org.jenkinsci.test.acceptance.junit.Native;
 import org.jenkinsci.test.acceptance.junit.WithPlugins;
-import org.jenkinsci.test.acceptance.msbuild.MSBuildInstallation;
 import org.jenkinsci.test.acceptance.msbuild.MSBuildStep;
 import org.jenkinsci.test.acceptance.po.Build;
 import org.jenkinsci.test.acceptance.po.FreeStyleJob;
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.internal.AssumptionViolatedException;
 
 import com.google.inject.Inject;
 
 /**
- * This test is designed to be run on a Windows machine with MSBuild installed
- * 
- * In order for the test to know where the MSBuild installation dir is, an
- * environment variable must be set. i.e:
- * 
- *      MSBUILD_EXE = C:\Windows\Microsoft.NET\Framework\v2.0.50727\MSBuild.exe
+ * This test is designed to be run on a Windows machine with MSBuild installed and in the PATH
  * 
  * Tests will be skipped if:
- *      - The environment variable is not set 
- *      - The test is not running on a Windows machine
- *      - MSBUild.exe is not present in the specified location
+ *      - MSBUild.exe is in the path. This implies that machine running Jenkins is windows.
+ *      - The test and Jenkins are being run on different machines
  */
 @WithPlugins("msbuild")
-@TestActivation({"MSBUILD_EXE"})
-@WithOS(os = {WithOS.OS.WINDOWS})
+@Native({"MSBuild"})
 public class MSBuildPluginTest extends AbstractJUnitTest {
 
     @Inject
@@ -70,22 +57,6 @@ public class MSBuildPluginTest extends AbstractJUnitTest {
         }
     }
     
-    @Before
-    public void setUp() {
-         try {
-             Runtime.getRuntime().exec(MS_BUILD_EXECUTABLE);
-         } catch (IOException e){
-             throw new AssumptionViolatedException("Test will be skipped. MSBuild executable not reachable: " + MS_BUILD_EXECUTABLE);
-         }
-
-        // Configure MSBuild
-        jenkins.configure();
-        // Show Add MsBuild option
-        MSBuildInstallation msbuild = jenkins.getConfigPage().addTool(MSBuildInstallation.class);
-        msbuild.installedIn(MS_BUILD_EXECUTABLE).name.set(MSBUILD_NAME);
-        jenkins.save();
-    }
-
     @Test
     public void buildProjNoCmdLineArgumentsTest() {
         FreeStyleJob job = msBuildJob("/msbuild_plugin/projProject/", "project.proj", null);
