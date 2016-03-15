@@ -66,7 +66,7 @@ public @interface Native {
                     
                     // Checks performed in this annotation only makes sense if Jenkins and Tests are being executed in the same machine
                     if (!(controller instanceof LocalController)) {
-                        throw new AssumptionViolatedException("Test skipped. Native should be used with a local controller, otherwise it cannot be fully trusted to work as expected: " + controller.getClass().getName());
+                        throw new AssumptionViolatedException("Test skipped. Native should be used with a local controller, otherwise it cannot be fully trusted to work as expected.");
                     }
                     
                     // Get PATH
