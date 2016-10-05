@@ -179,7 +179,7 @@ public abstract class LocalController extends JenkinsController implements LogLi
             } finally {
                 template.delete();
             }
-            installDetachedPlugins();
+            //installDetachedPlugins();
         } catch (Exception e) {
             throw new IOException(e.getMessage(), e);
         }
